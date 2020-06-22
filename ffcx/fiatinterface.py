@@ -151,7 +151,27 @@ def create_quadrature(shape, degree, scheme="default"):
     if shape in ufl.cell.cellname2dim and ufl.cell.cellname2dim[shape] == 0:
         return (numpy.zeros((1, 0)), numpy.ones((1, )))
 
+    if scheme == "GLL":
+        def _quad(cell, degree):
+            if cell.get_shape() == FIAT.reference_element.TENSORPRODUCT:
+                try:
+                    degree = tuple(degree)
+                except TypeError:
+                    degree = (degree,) * len(cell.cells)
+
+                assert len(cell.cells) == len(degree)
+                quad_rules = [FIAT.quadrature.GaussLobattoLegendreQuadratureLineRule(
+                    c, d) for c, d in zip(cell.cells, degree)]
+                return FIAT.quadrature.make_tensor_product_quadrature(*quad_rules)
+
+            if cell.get_shape() in [FIAT.reference_element.QUADRILATERAL, FIAT.reference_element.HEXAHEDRON]:
+                return _quad(cell.product, degree)
+
+        quad_rule = _quad(FIAT.ufc_cell(shape), degree)
+        return numpy.asarray(quad_rule.get_points()), numpy.asarray(quad_rule.get_weights())
+
     quad_rule = FIAT.create_quadrature(FIAT.ufc_cell(shape), degree, scheme)
+    print("post")
     points = numpy.asarray(quad_rule.get_points())
     weights = numpy.asarray(quad_rule.get_weights())
     return points, weights
