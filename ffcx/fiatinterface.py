@@ -35,7 +35,6 @@ class SpaceOfReals(object):
 def reference_cell_vertices(cellname):
     """Return dict of coordinates of reference cell vertices for this 'cellname'."""
     return FIAT.ufc_cell(cellname).get_vertices()
-<<<<<<< HEAD
 
 
 @functools.singledispatch
@@ -51,23 +50,6 @@ def _create_finiteelement(element: ufl.FiniteElement) -> FIAT.FiniteElement:
         e.__class__ = type('SpaceOfReals', (type(e), SpaceOfReals), {})
         return e
 
-=======
-
-
-@functools.singledispatch
-def _create_element(element):
-    raise ValueError("Element type is not supported.")
-
-
-@_create_element.register(ufl.FiniteElement)
-def _create_finiteelement(element: ufl.FiniteElement) -> FIAT.FiniteElement:
-    """Create FIAT element for UFL base type ufl.FiniteElement."""
-    if element.family() == "Real":
-        e = create_element(ufl.FiniteElement("DG", element.cell(), 0))
-        e.__class__ = type('SpaceOfReals', (type(e), SpaceOfReals), {})
-        return e
-
->>>>>>> origin/master
     if element.family() == "Quadrature":
         assert element.degree() is not None
         assert element.quadrature_scheme() is not None
@@ -132,7 +114,6 @@ def _create_nodalenriched_finiteelement(element: ufl.NodalEnrichedElement) -> FI
 def _create_restricted_finiteelement(element: ufl.RestrictedElement):
     # element = _create_restricted_element(element)
     raise RuntimeError("Cannot handle this element type: {}".format(element))
-<<<<<<< HEAD
 
 
 @_create_element.register(ufl.TensorProductElement)
@@ -141,16 +122,6 @@ def _create_tp_finiteelement(element) -> FIAT.TensorProductElement:
     return FIAT.TensorProductElement(_create_element(e0), _create_element(e1))
 
 
-=======
-
-
-@_create_element.register(ufl.TensorProductElement)
-def _create_tp_finiteelement(element) -> FIAT.TensorProductElement:
-    e0, e1 = element.sub_elements()
-    return FIAT.TensorProductElement(_create_element(e0), _create_element(e1))
-
-
->>>>>>> origin/master
 def create_element(ufl_element: ufl.finiteelement) -> FIAT.FiniteElement:
     """Create a FIAT finite element for a given UFL element."""
 
@@ -160,10 +131,6 @@ def create_element(ufl_element: ufl.finiteelement) -> FIAT.FiniteElement:
         return _cache[element_signature]
 
     # Create element and add to cache
-<<<<<<< HEAD
-    print(ufl_element, type(ufl_element))
-=======
->>>>>>> origin/master
     element = _create_element(ufl_element)
     _cache[element_signature] = element
 
@@ -183,7 +150,6 @@ def create_quadrature(shape, degree, scheme="default"):
     if shape in ufl.cell.cellname2dim and ufl.cell.cellname2dim[shape] == 0:
         return (numpy.zeros((1, 0)), numpy.ones((1, )))
 
-<<<<<<< HEAD
     if scheme == "GLL":
         def _quad(cell, degree):
             if cell.get_shape() == FIAT.reference_element.TENSORPRODUCT:
@@ -205,9 +171,6 @@ def create_quadrature(shape, degree, scheme="default"):
 
     quad_rule = FIAT.create_quadrature(FIAT.ufc_cell(shape), degree, scheme)
     print("post")
-=======
-    quad_rule = FIAT.create_quadrature(FIAT.ufc_cell(shape), degree, scheme)
->>>>>>> origin/master
     points = numpy.asarray(quad_rule.get_points())
     weights = numpy.asarray(quad_rule.get_weights())
     return points, weights
