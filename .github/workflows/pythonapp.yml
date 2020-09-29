@@ -16,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -31,7 +33,7 @@ jobs:
       - name: Install dependencies (Python)
         run: |
           pip install --upgrade pip
-          pip install pygraphviz
+          pip install pygraphviz wheel setuptools_scm
           pip install git+https://github.com/FEniCS/fiat.git --user
           pip install git+https://github.com/FEniCS/ufl.git --user
       - name: Lint with flake8
@@ -48,7 +50,8 @@ jobs:
       - name: Run units tests
         run: |
           pip install coveralls coverage pytest pytest-cov pytest-xdist
-          pytest -n auto --cov=ffcx/ --junitxml=junit/test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml test/
+          pytest -n auto --cov=../ffcx/ --junitxml=../junit/test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml .
+        working-directory: test
       - name: Upload to Coveralls
         if: ${{ github.repository == 'FEniCS/ffcx' && github.head_ref == '' && matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' }}
         env:
