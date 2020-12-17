@@ -227,7 +227,7 @@ extern "C"
     /// Return topological dimension of the coordinate_mapping
     int topological_dimension;
 
-    /// Boolean flag for affine 
+    /// Boolean flag for affine
     int is_affine;
 
     /// Return cell shape of the coordinate_mapping
@@ -392,20 +392,23 @@ extern "C"
     /// Rank of the global tensor (r)
     int rank;
 
-    /// Number of coefficients (n)
+    /// Number of coefficients in the form
     int num_coefficients;
 
     /// Number of constants
     int num_constants;
 
-    /// Return original coefficient position for each coefficient
+    /// Return original coefficient position for each coefficient. The
+    /// position may have changed if some coefficients were eliminated
+    /// when processing the form.
     ///
-    /// @param i
-    ///        Coefficient number, 0 <= i < n
-    ///
+    /// @param[i] i The coefficient index number. It must be less than
+    /// num_coefficients.
+    /// @return The position in the original form. Returns -1 if i >=
+    /// number of coefficients in the form.
     int (*original_coefficient_position)(int i);
 
-    /// Return list of names of coefficients
+    /// Return list of names of coefficients that are in the form
     const char** (*coefficient_name_map)(void);
 
     /// Return list of names of constants
