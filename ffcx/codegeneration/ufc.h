@@ -183,6 +183,9 @@ extern "C"
     /// Return the block size for a VectorElement or TensorElement
     int block_size;
 
+    /// The topological dimension of the domain of the element
+    int domain_dim;
+
     /// Number of dofs associated with each cell entity of
     /// dimension d
     int num_entity_dofs[4];

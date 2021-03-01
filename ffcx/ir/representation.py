@@ -53,7 +53,8 @@ ir_element = namedtuple('ir_element', [
     'needs_permutation_data', 'interpolation_is_identity'])
 ir_dofmap = namedtuple('ir_dofmap', [
     'id', 'name', 'signature', 'num_global_support_dofs', 'num_element_support_dofs', 'num_entity_dofs',
-    'tabulate_entity_dofs', 'base_permutations', 'num_sub_dofmaps', 'create_sub_dofmap', 'block_size'])
+    'tabulate_entity_dofs', 'base_permutations', 'num_sub_dofmaps', 'create_sub_dofmap', 'block_size',
+    'domain_dim'])
 ir_coordinate_map = namedtuple('ir_coordinate_map', [
     'id', 'prefix', 'name', 'signature', 'cell_shape', 'topological_dimension', 'geometric_dimension',
     'compute_physical_coordinates', 'compute_reference_coordinates', 'compute_jacobians',
@@ -214,7 +215,7 @@ def _compute_dofmap_ir(ufl_element, element_numbers, dofmap_names):
     else:
         ir["block_size"] = 1
 
-    ir["base_permutations"] = basix_element.base_permutations
+    ir["domain_dim"] = basix_element.cell_tdim
 
     # Precompute repeatedly used items
     for i in basix_element.entity_dofs:
@@ -224,7 +225,35 @@ def _compute_dofmap_ir(ufl_element, element_numbers, dofmap_names):
     num_dofs_per_entity = [i[0] for i in basix_element.entity_dofs]
 
     ir["num_entity_dofs"] = num_dofs_per_entity
+
+    ir["base_permutations"] = basix_element.base_permutations
+
     ir["tabulate_entity_dofs"] = (basix_element.entity_dof_numbers, num_dofs_per_entity)
+
+    # Probably incorrect attempt to get facet spaces working
+    #    # TODO: move this to basix_interface
+    #    # TODO: implement base permutations
+    #    ir["base_permutations"] = basix_element.base_permutations
+    #    for i in range(basix_element.cell_tdim, ufl_element.cell().topological_dimension()):
+    #        num_dofs_per_entity.append(0)
+    #    dof_ns = []
+    #    dn = 0
+    #    for i in range(ufl_element.cell().topological_dimension() + 1):
+    #        sub_dofs = []
+    #        if i == ufl_element.cell().topological_dimension():
+    #            num_sub_entities = 0
+    #        elif i == 0:
+    #            num_sub_entities = ufl_element.cell().num_vertices()
+    #        elif i == 1:
+    #            num_sub_entities = ufl_element.cell().num_edges()
+    #        else:
+    #            assert i == 2
+    #            num_sub_entities = ufl_element.cell().num_faces()
+    #        for j in range(num_sub_entities):
+    #            sub_dofs.append(list(range(dn, dn + num_dofs_per_entity[i])))
+    #            dn += num_dofs_per_entity[i]
+    #        dof_ns.append(sub_dofs)
+    #    ir["tabulate_entity_dofs"] = (dof_ns, num_dofs_per_entity)
 
     ir["num_global_support_dofs"] = basix_element.num_global_support_dofs
     ir["num_element_support_dofs"] = basix_element.dim - ir["num_global_support_dofs"]
