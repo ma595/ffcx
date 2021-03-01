@@ -185,6 +185,8 @@ def get_ffcx_table_values(points, cell, integral_type, ufl_element, avg, entityt
             entity_points = map_integral_points(
                 points, integral_type, cell, entity)
             # basix
+            # TODO: on facet spaces, map_integral_points should be skipped, ie:
+            #  tbl = basix_element.tabulate(deriv_order, points)
             tbl = basix_element.tabulate(deriv_order, entity_points)
             index = basix_index(*derivative_counts)
             tbl = tbl[index].transpose()
