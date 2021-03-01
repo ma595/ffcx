@@ -66,6 +66,10 @@ extern "C"
     /// Return the cell shape
     ufc_shape cell_shape;
 
+    /// Return the shape the space is defined on
+    /// For (eg) spaces defined on facets of the mesh, this is not always the same as the cell shape
+    ufc_shape domain_shape;
+
     /// Return the topological dimension of the cell shape
     int topological_dimension;
 

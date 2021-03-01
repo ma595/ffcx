@@ -56,6 +56,7 @@ ufc_finite_element* create_{factory_name}(void)
 
   element->signature = {signature};
   element->cell_shape = {cell_shape};
+  element->domain_shape = {domain_shape};
   element->topological_dimension = {topological_dimension};
   element->geometric_dimension = {geometric_dimension};
   element->space_dimension = {space_dimension};

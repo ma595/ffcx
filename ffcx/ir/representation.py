@@ -46,7 +46,7 @@ ir_form = namedtuple('ir_form', [
     'get_interior_facet_integral_ids', 'create_vertex_integral', 'get_vertex_integral_ids',
     'create_custom_integral', 'get_custom_integral_ids'])
 ir_element = namedtuple('ir_element', [
-    'id', 'name', 'signature', 'cell_shape', 'topological_dimension',
+    'id', 'name', 'signature', 'cell_shape', 'domain_shape', 'topological_dimension',
     'geometric_dimension', 'space_dimension', 'value_shape', 'reference_value_shape', 'degree',
     'family', 'num_sub_elements', 'block_size', 'create_sub_element',
     'entity_dofs', 'base_permutations',
@@ -155,6 +155,7 @@ def _compute_element_ir(ufl_element, element_numbers, finite_element_names, epsi
     # Compute data for each function
     ir["signature"] = repr(ufl_element)
     ir["cell_shape"] = cellname
+    ir["domain_shape"] = basix_element.cell_name
     ir["topological_dimension"] = cell.topological_dimension()
     ir["geometric_dimension"] = cell.geometric_dimension()
     ir["space_dimension"] = basix_element.dim

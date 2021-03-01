@@ -77,7 +77,7 @@ def apply_dof_transformation(L, ir, parameters, inverse=False, transpose=False, 
     block_size = L.Symbol("dim")
 
     apply_permutations = apply_permutations_to_data(
-        L, ir.base_permutations, ir.cell_shape, data, inverse=inverse, transpose=transpose,
+        L, ir.base_permutations, ir.domain_shape, data, inverse=inverse, transpose=transpose,
         indices=lambda dof: dof * block_size + block, ranges=[(block, 0, block_size)],
         dtype=dtype)
     return apply_permutations + [L.Return(0)]
@@ -98,6 +98,7 @@ def generator(ir, parameters):
     d["geometric_dimension"] = ir.geometric_dimension
     d["topological_dimension"] = ir.topological_dimension
     d["cell_shape"] = ir.cell_shape
+    d["domain_shape"] = ir.domain_shape
     d["space_dimension"] = ir.space_dimension
     d["value_rank"] = len(ir.value_shape)
     d["value_size"] = ufl.product(ir.value_shape)

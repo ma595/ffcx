@@ -11,6 +11,8 @@ basix_cells = {
     "hexahedron": basix.CellType.hexahedron
 }
 
+basix_cells_reverse = {j: i for i, j in basix_cells.items()}
+
 # This dictionary can be used to map ufl element names to basix element names.
 # Currently all the names agree but this will not necessarily remian true.
 ufl_to_basix_names = {
@@ -26,6 +28,17 @@ ufl_to_basix_names = {
 def create_basix_element(ufl_element):
     # TODO: EnrichedElement
     # TODO: Short/alternative names for elements
+
+    if ufl_element.family() == "HDiv Trace":
+        cell = ufl_element.cell()
+        assert cell.has_simplex_facets() and cell.topological_dimension() > 1
+        if cell.topological_dimension() == 2:
+            return BasixElement(basix.create_element(
+                "Discontinuous Lagrange", "interval", ufl_element.degree()))
+        else:
+            assert cell.topological_dimension() == 3
+            return BasixElement(basix.create_element(
+                "Discontinuous Lagrange", "triangle", ufl_element.degree()))
 
     if isinstance(ufl_element, ufl.VectorElement):
         return BlockedElement(create_basix_element(ufl_element.sub_elements()[0]),
@@ -69,6 +82,10 @@ def map_facet_points(points, facet, cellname):
 
 class BasixBaseElement:
     def tabulate(self, nderivs, points):
+        raise NotImplementedError
+
+    @property
+    def cell_name(self):
         raise NotImplementedError
 
     @property
@@ -130,6 +147,10 @@ class BasixElement(BasixBaseElement):
 
     def tabulate(self, nderivs, points):
         return self.element.tabulate(nderivs, points)
+
+    @property
+    def cell_name(self):
+        return basix_cells_reverse[self.element.cell_type]
 
     @property
     def base_permutations(self):
@@ -211,6 +232,10 @@ class MixedElement(BasixBaseElement):
                     start += self.value_size
             tables.append(new_table)
         return tables
+
+    @property
+    def cell_name(self):
+        return self.sub_elements[0].cell_name
 
     @property
     def base_permutations(self):
@@ -328,6 +353,10 @@ class BlockedElement(BasixBaseElement):
                 new_table[:, col: col + table.shape[1] * self.block_size**2: self.block_size**2] = table
             output.append(new_table)
         return output
+
+    @property
+    def cell_name(self):
+        return self.sub_element.cell_name
 
     @property
     def base_permutations(self):
