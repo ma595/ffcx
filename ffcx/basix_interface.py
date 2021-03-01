@@ -89,6 +89,10 @@ class BasixBaseElement:
         raise NotImplementedError
 
     @property
+    def cell_tdim(self):
+        return len(basix.topology(basix_cells[self.cell_name])) - 1
+
+    @property
     def base_permutations(self):
         raise NotImplementedError
 
