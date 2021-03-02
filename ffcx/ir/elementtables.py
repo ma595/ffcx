@@ -182,11 +182,13 @@ def get_ffcx_table_values(points, cell, integral_type, ufl_element, avg, entityt
     if sh == ():
         # Scalar valued element
         for entity in range(num_entities):
-            entity_points = map_integral_points(
-                points, integral_type, cell, entity)
+            if ufl_element.family() == "HDiv Trace":
+                # TODO Check this works in higher dimensions
+                entity_points = points
+            else:
+                entity_points = map_integral_points(
+                    points, integral_type, cell, entity)
             # basix
-            # TODO: on facet spaces, map_integral_points should be skipped, ie:
-            #  tbl = basix_element.tabulate(deriv_order, points)
             tbl = basix_element.tabulate(deriv_order, entity_points)
             index = basix_index(*derivative_counts)
             tbl = tbl[index].transpose()
