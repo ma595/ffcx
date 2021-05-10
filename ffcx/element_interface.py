@@ -12,7 +12,6 @@ basix_cells = {
 }
 
 # This dictionary can be used to map ufl element names to basix element names.
-# Currently all the names agree but this will not necessarily remian true.
 ufl_to_basix_names = {
     "Q": "Lagrange",
     "DQ": "Discontinuous Lagrange",
@@ -24,7 +23,6 @@ ufl_to_basix_names = {
 
 
 def create_element(ufl_element):
-    # TODO: EnrichedElement
     # TODO: Short/alternative names for elements
 
     if isinstance(ufl_element, ufl.VectorElement):
@@ -36,6 +34,10 @@ def create_element(ufl_element):
 
     if isinstance(ufl_element, ufl.MixedElement):
         return MixedElement([create_element(e) for e in ufl_element.sub_elements()])
+
+
+    if isinstance(ufl_element, ufl.EnrichedElement):
+        return EnrichedElement([create_element(e) for e in ufl_element._elements])
 
     if ufl_element.family() in ufl_to_basix_names:
         return BasixElement(basix.create_element(
@@ -299,6 +301,118 @@ class MixedElement(BaseElement):
     @property
     def family_name(self):
         return "mixed element"
+
+    @property
+    def reference_topology(self):
+        return self.sub_elements[0].reference_topology
+
+    @property
+    def reference_geometry(self):
+        return self.sub_elements[0].reference_geometry
+
+
+class EnrichedElement(BaseElement):
+    def __init__(self, sub_elements):
+        assert len(sub_elements) > 0
+        self.sub_elements = sub_elements
+
+    def tabulate(self, nderivs, points):
+        tables = []
+        results = [e.tabulate(nderivs, points) for e in self.sub_elements]
+        for deriv_tables in zip(*results):
+            new_table = numpy.zeros((len(points), self.value_size * self.dim))
+            start = 0
+            for e, t in zip(self.sub_elements, deriv_tables):
+                for i in range(0, e.dim, e.value_size):
+                    new_table[:, start: start + e.value_size] = t[:, i: i + e.value_size]
+                    start += self.value_size
+            tables.append(new_table)
+        return tables
+
+    @property
+    def base_transformations(self):
+        for e in self.sub_elements[1:]:
+            assert len(e.base_transformations) == len(self.sub_elements[0].base_transformations)
+        transformations = [[] for i in self.sub_elements[0].base_transformations]
+        for e in self.sub_elements:
+            for i, b in enumerate(e.base_transformations):
+                transformations[i].append(b)
+
+        output = []
+        for p in transformations:
+            new_transformation = numpy.zeros((sum(i.shape[0] for i in p), sum(i.shape[1] for i in p)))
+            row_start = 0
+            col_start = 0
+            for i in p:
+                new_transformation[row_start: row_start + i.shape[0], col_start: col_start + i.shape[1]] = i
+                row_start += i.shape[0]
+                col_start += i.shape[1]
+            output.append(new_transformation)
+        return output
+
+    @property
+    def interpolation_matrix(self):
+        try:
+            matrix = numpy.zeros((self.dim, len(self.points) * self.value_size))
+            start_row = 0
+            start_col = 0
+            for e in self.sub_elements:
+                m = e.interpolation_matrix
+                matrix[start_row: start_row + m.shape[0], start_col: start_col + m.shape[1]] = m
+                start_row += m.shape[0]
+                start_col += m.shape[1]
+            return matrix
+        except ValueError:
+            return numpy.zeros((0, 0))
+
+    @property
+    def points(self):
+        try:
+            return numpy.vstack([e.points for e in self.sub_elements])
+        except ValueError:
+            return numpy.zeros(0)
+
+    @property
+    def dim(self):
+        return sum(e.dim for e in self.sub_elements)
+
+    @property
+    def value_size(self):
+        return sum(e.value_size for e in self.sub_elements)
+
+    @property
+    def value_shape(self):
+        return (sum(e.value_size for e in self.sub_elements), )
+
+    @property
+    def entity_dofs(self):
+        data = [e.entity_dofs for e in self.sub_elements]
+        return [[sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
+                for tdim, entities in enumerate(data[0])]
+
+    @property
+    def entity_dof_numbers(self):
+        dofs = [[[] for i in entities] for entities in self.sub_elements[0].entity_dof_numbers]
+        start_dof = 0
+        for e in self.sub_elements:
+            for tdim, entities in enumerate(e.entity_dof_numbers):
+                for entity_n, entity_dofs in enumerate(entities):
+                    dofs[tdim][entity_n] += [start_dof + i for i in entity_dofs]
+            start_dof += e.dim
+        return dofs
+
+    @property
+    def coeffs(self):
+        # Return empty matrix to disable interpolation into mixed elements
+        return numpy.zeros(0, 0)
+
+    @property
+    def num_global_support_dofs(self):
+        return sum(e.num_global_support_dofs for e in self.sub_elements)
+
+    @property
+    def family_name(self):
+        return "enriched element"
 
     @property
     def reference_topology(self):
