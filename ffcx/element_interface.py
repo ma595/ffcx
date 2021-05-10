@@ -35,8 +35,7 @@ def create_element(ufl_element):
     if isinstance(ufl_element, ufl.MixedElement):
         return MixedElement([create_element(e) for e in ufl_element.sub_elements()])
 
-
-    if isinstance(ufl_element, ufl.EnrichedElement):
+    if isinstance(ufl_element, ufl.EnrichedElement) or isinstance(ufl_element, ufl.NodalEnrichedElement):
         return EnrichedElement([create_element(e) for e in ufl_element._elements])
 
     if ufl_element.family() in ufl_to_basix_names:
