@@ -83,6 +83,20 @@ def generator(ir, parameters):
     return declaration, implementation
 
 
+def compute_integral_body(ir, backend):
+
+    # Configure kernel generator
+    ig = IntegralGenerator(ir, backend)
+
+    # Generate code ast for the tabulate_tensor body
+    parts = ig.generate()
+
+    # Format code as string
+    body = format_indented_lines(parts.cs_format(ir.precision), 1)
+
+    return body
+
+
 class IntegralGenerator(object):
     def __init__(self, ir, backend):
         # Store ir

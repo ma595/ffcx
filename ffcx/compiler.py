@@ -69,8 +69,13 @@ from time import time
 
 from ffcx.analysis import analyze_ufl_objects
 from ffcx.codegeneration.codegeneration import generate_code
+from ffcx.codegeneration.integrals import compute_integral_body
 from ffcx.formatting import format_code
+from ffcx.codegeneration.backend import FFCXBackend
 from ffcx.ir.representation import compute_ir
+from ffcx import get_parameters
+
+import ufl
 
 logger = logging.getLogger("ffcx")
 
@@ -114,3 +119,32 @@ def compile_ufl_objects(ufl_objects: typing.Union[typing.List, typing.Tuple],
     _print_timing(4, time() - cpu_time)
 
     return code_h, code_c
+
+
+def compile_form(form: ufl.Form, object_names: typing.Dict = {},
+                 prefix: str = "",
+                 parameters: typing.Dict = None,
+                 visualise: bool = False):
+
+    if parameters is None:
+        parameters = get_parameters()
+
+    # Stage 1: analysis
+    cpu_time = time()
+    analysis = analyze_ufl_objects([form], parameters)
+    _print_timing(1, time() - cpu_time)
+
+    # Stage 2: intermediate representation
+    cpu_time = time()
+    ir = compute_ir(analysis, object_names, prefix, parameters, visualise)
+    _print_timing(2, time() - cpu_time)
+
+    if len(ir.integrals) > 1:
+        raise RuntimeError("This function is meant to compile one integral type a time.")
+
+    integral_ir = ir.integrals[0]
+    backend = FFCXBackend(integral_ir, parameters)
+
+    body = compute_integral_body(integral_ir, backend)
+
+    return body
