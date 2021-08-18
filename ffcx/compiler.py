@@ -121,8 +121,8 @@ def compile_ufl_objects(ufl_objects: typing.Union[typing.List, typing.Tuple],
     return code_h, code_c
 
 
-def compile_form(form: ufl.Form, object_names: typing.Dict = {},
-                 prefix: str = "",
+def compile_form(form: ufl.Form, name: str,
+                 object_names: typing.Dict = {},
                  parameters: typing.Dict = None,
                  visualise: bool = False):
 
@@ -136,7 +136,7 @@ def compile_form(form: ufl.Form, object_names: typing.Dict = {},
 
     # Stage 2: intermediate representation
     cpu_time = time()
-    ir = compute_ir(analysis, object_names, prefix, parameters, visualise)
+    ir = compute_ir(analysis, object_names, " ", parameters, visualise)
     _print_timing(2, time() - cpu_time)
 
     if len(ir.integrals) > 1:
@@ -145,6 +145,16 @@ def compile_form(form: ufl.Form, object_names: typing.Dict = {},
     integral_ir = ir.integrals[0]
     backend = FFCXBackend(integral_ir, parameters)
 
-    body = compute_integral_body(integral_ir, backend)
+    # FIXME: Get signature from backend (c++/template, c, cuda, etc)
+    arguments = """(ufc_scalar_t* restrict A,
+                    const ufc_scalar_t* restrict w,
+                    const ufc_scalar_t* restrict c,
+                    const double* restrict coordinate_dofs,
+                    const int* restrict entity_local_index,
+                    const uint8_t* restrict quadrature_permutation) {\n"""
 
-    return body
+    signature = "static inline void " + name + arguments
+    body = compute_integral_body(integral_ir, backend)
+    code = signature + body + "\n}\n"
+
+    return code
