@@ -122,7 +122,6 @@ def compile_ufl_objects(ufl_objects: typing.Union[typing.List, typing.Tuple],
 
 
 def compile_form(form: ufl.Form, name: str,
-                 object_names: typing.Dict = {},
                  parameters: typing.Dict = None,
                  visualise: bool = False):
 
@@ -130,18 +129,15 @@ def compile_form(form: ufl.Form, name: str,
         parameters = get_parameters()
 
     # Stage 1: analysis
-    cpu_time = time()
     analysis = analyze_ufl_objects([form], parameters)
-    _print_timing(1, time() - cpu_time)
 
     # Stage 2: intermediate representation
-    cpu_time = time()
-    ir = compute_ir(analysis, object_names, " ", parameters, visualise)
-    _print_timing(2, time() - cpu_time)
+    ir = compute_ir(analysis, {}, " ", parameters, visualise)
 
     if len(ir.integrals) > 1:
         raise RuntimeError("This function is meant to compile one integral type a time.")
 
+    # Stage 3: code generation
     integral_ir = ir.integrals[0]
     backend = FFCXBackend(integral_ir, parameters)
 
