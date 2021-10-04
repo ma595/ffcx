@@ -8,8 +8,7 @@ import numpy as np
 
 
 def permute_in_place(L, perm, A, direction):
-    """Permute the flattened array A with the permutation given in perm"""
-
+    """Permute the flattened array A with the permutation given in perm."""
     # Marker for indices which still need adding to the list
     n = len(perm)
     mark = np.ones(n, dtype=bool)
