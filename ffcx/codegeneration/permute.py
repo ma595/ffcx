@@ -29,35 +29,36 @@ def permute_in_place(L, perm, A, direction):
             idx = mark.nonzero()[0][0]
             chains.append([])
 
-    # Flatten and get offsets
+    # Flatten and get sizes
     c_values = np.array([item for sublist in chains for item in sublist])
-    offset_values = np.cumsum([0] + [len(ch) for ch in chains])
+    size_values = [len(ch) for ch in chains]
 
     # Code generation
     w = A.array
     len_A = np.product([v.value for v in A.dims])
     print(len_A, n)
     assert len_A == n, "Incorrect number of permutation values for array"
-    offsets = L.Symbol("perm_offsets")
+    sizes = L.Symbol("perm_sizes")
     c = L.Symbol("perm_values")
-    code = [L.ArrayDecl("const int", offsets, len(offset_values), values=offset_values),
+    code = [L.ArrayDecl("const int", sizes, len(size_values), values=size_values),
             L.ArrayDecl("const int", c, len(c_values), values=c_values)]
     i = L.Symbol("i")
     j = L.Symbol("j")
+    p = L.Symbol("p")
     wtmp = L.Symbol("wtmp")
 
     if direction == "forward":
-        body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[offsets[i]]]),
-                L.ForRange(j, 1, offsets[i + 1] - offsets[i],
-                body=[L.Assign(w[c[offsets[i] + j - 1]], w[c[offsets[i] + j]])]),
-                L.Assign(w[c[offsets[i + 1] - 1]], wtmp)]
-        code += [L.ForRange(i, 0, len(offset_values) - 1, body=body)]
+        body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[p]]),
+                L.ForRange(j, 1, sizes[i],
+                body=[L.Assign(w[c[p]], w[c[p + 1]]), L.PreIncrement(p)]),
+                L.Assign(w[c[p]], wtmp), L.PreIncrement(p)]
+        code += [L.VariableDecl("int", p, 0), L.ForRange(i, 0, len(size_values), body=body)]
     elif direction == "reverse":
-        body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[offsets[i + 1] - 1]]),
-                L.ForRange(j, 1, offsets[i + 1] - offsets[i],
-                body=[L.Assign(w[c[offsets[i + 1] - j]], w[c[offsets[i + 1] - j - 1]])]),
-                L.Assign(w[c[offsets[i]]], wtmp)]
-        code += [L.ForRange(i, 0, len(offset_values) - 1, body=body)]
+        body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[p]]),
+                L.ForRange(j, 1, sizes[(len(size_values) - 1) - i],
+                body=[L.Assign(w[c[p - 1]], w[c[p]]), L.PreDecrement(p)]),
+                L.Assign(w[c[p]], wtmp), L.PreDecrement(p)]
+        code += [L.VariableDecl("int", p, len(c_values) - 1), L.ForRange(i, 0, len(size_values), body=body)]
     else:
         raise RuntimeError(f"Invalid permutation direction: {direction}")
 
