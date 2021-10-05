@@ -36,7 +36,7 @@ def permute_in_place(L, perm, A, direction):
         if len(ch) > 1:
             c_values.extend(ch)
             size_values.append(len(ch))
-    
+
     # Code generation
     w = A.array
     len_A = np.product([v.value for v in A.dims])
