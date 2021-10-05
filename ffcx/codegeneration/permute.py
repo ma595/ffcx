@@ -30,13 +30,16 @@ def permute_in_place(L, perm, A, direction):
             chains.append([])
 
     # Flatten and get sizes
-    c_values = np.array([item for sublist in chains for item in sublist])
-    size_values = [len(ch) for ch in chains]
-
+    c_values = []
+    size_values = []
+    for ch in chains:
+        if len(ch) > 1:
+            c_values.extend(ch)
+            size_values.append(len(ch))
+    
     # Code generation
     w = A.array
     len_A = np.product([v.value for v in A.dims])
-    print(len_A, n)
     assert len_A == n, "Incorrect number of permutation values for array"
     sizes = L.Symbol("perm_sizes")
     c = L.Symbol("perm_values")
