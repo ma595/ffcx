@@ -25,6 +25,7 @@ def test_permute():
     ffibuilder.cdef("void permute_fwd(double *); void permute_rev(double *);")
     ffibuilder.set_source("_permute", fn)
     ffibuilder.compile(verbose=True)
+    sys.path.append(os.getcwd())
     print(os.listdir(), sys.path)
 
     import _permute
