@@ -40,7 +40,7 @@ def permute_in_place(L, perm, A, direction):
     # Code generation
     w = A.array
     len_A = np.product([v.value for v in A.dims])
-    assert len_A == n, "Incorrect number of permutation values for array"
+    assert len_A == n, f"Incorrect number of permutation values for array: {len_A}, {n}"
     sizes = L.Symbol("perm_sizes")
     c = L.Symbol("perm_values")
     code = [L.ArrayDecl("const int", sizes, len(size_values), values=size_values),
@@ -53,17 +53,16 @@ def permute_in_place(L, perm, A, direction):
     if direction == "forward":
         body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[p]]),
                 L.ForRange(j, 1, sizes[i],
-                body=[L.Assign(w[c[p]], w[c[p + 1]]), L.PreIncrement(p)]),
+                           body=[L.Assign(w[c[p]], w[c[p + 1]]), L.PreIncrement(p)]),
                 L.Assign(w[c[p]], wtmp), L.PreIncrement(p)]
         code += [L.VariableDecl("int", p, 0), L.ForRange(i, 0, len(size_values), body=body)]
     elif direction == "reverse":
         body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[p]]),
                 L.ForRange(j, 1, sizes[(len(size_values) - 1) - i],
-                body=[L.Assign(w[c[p - 1]], w[c[p]]), L.PreDecrement(p)]),
+                           body=[L.Assign(w[c[p]], w[c[p - 1]]), L.PreDecrement(p)]),
                 L.Assign(w[c[p]], wtmp), L.PreDecrement(p)]
         code += [L.VariableDecl("int", p, len(c_values) - 1), L.ForRange(i, 0, len(size_values), body=body)]
     else:
         raise RuntimeError(f"Invalid permutation direction: {direction}")
 
-    print(L.StatementList(code))
     return code
