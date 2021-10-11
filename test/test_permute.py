@@ -2,6 +2,7 @@ import ffcx.codegeneration.C.cnodes as Language
 from ffcx.codegeneration.permute import permute_in_place
 import numpy as np
 import os
+import sys
 from cffi import FFI
 
 
@@ -24,7 +25,7 @@ def test_permute():
     ffibuilder.cdef("void permute_fwd(double *); void permute_rev(double *);")
     ffibuilder.set_source("_permute", fn)
     ffibuilder.compile(verbose=True)
-    print(os.listdir())
+    print(os.listdir(), sys.path)
 
     import _permute
     Avec = np.arange(n, dtype=np.float64)
