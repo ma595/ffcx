@@ -10,7 +10,7 @@ def test_permute():
     r = np.arange(n - 1, -1, -1, dtype=int)
     A = Language.ArrayDecl("double", Language.Symbol("A"), sizes=(n,))
     A = Language.FlattenedArray(A, dims=(n,))
-    
+
     # Build code with cffi
     code_f = permute_in_place(Language, r, A, "forward")
     code_r = permute_in_place(Language, r, A, "reverse")
@@ -21,7 +21,7 @@ def test_permute():
     {{\n{Language.StatementList(code_r)}\n}}"""
     ffibuilder = FFI()
     ffibuilder.cdef("void permute_fwd(double *); void permute_rev(double *);")
-    ffibuilder.set_source("_permute", fn);
+    ffibuilder.set_source("_permute", fn)
     ffibuilder.compile(verbose=True)
 
     import _permute
