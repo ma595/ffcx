@@ -11,6 +11,10 @@ def permute_in_place(L, perm, A, direction):
     """Permute the flattened array A with the permutation given in perm."""
     # Marker for indices which still need adding to the list
     n = len(perm)
+
+    if direction not in ("forward", "reverse"):
+        raise RuntimeError(f"Invalid permutation direction: {direction}")
+
     mark = np.ones(n, dtype=bool)
     # List of lists, representing the permuting groups
     chains = [[]]
@@ -34,7 +38,10 @@ def permute_in_place(L, perm, A, direction):
     size_values = []
     for ch in chains:
         if len(ch) > 1:
-            c_values.extend(ch)
+            if direction == "forward":
+                c_values.extend(ch)
+            else:
+                c_values.extend(reversed(ch))
             size_values.append(len(ch))
 
     # Code generation
@@ -50,19 +57,10 @@ def permute_in_place(L, perm, A, direction):
     p = L.Symbol("p")
     wtmp = L.Symbol("wtmp")
 
-    if direction == "forward":
-        body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[p]]),
-                L.ForRange(j, 1, sizes[i],
-                           body=[L.Assign(w[c[p]], w[c[p + 1]]), L.PreIncrement(p)]),
-                L.Assign(w[c[p]], wtmp), L.PreIncrement(p)]
-        code += [L.VariableDecl("int", p, 0), L.ForRange(i, 0, len(size_values), body=body)]
-    elif direction == "reverse":
-        body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[p]]),
-                L.ForRange(j, 1, sizes[(len(size_values) - 1) - i],
-                           body=[L.Assign(w[c[p]], w[c[p - 1]]), L.PreDecrement(p)]),
-                L.Assign(w[c[p]], wtmp), L.PreDecrement(p)]
-        code += [L.VariableDecl("int", p, len(c_values) - 1), L.ForRange(i, 0, len(size_values), body=body)]
-    else:
-        raise RuntimeError(f"Invalid permutation direction: {direction}")
+    body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[p]]),
+            L.ForRange(j, 1, sizes[i],
+                       body=[L.Assign(w[c[p]], w[c[p + 1]]), L.PreIncrement(p)]),
+            L.Assign(w[c[p]], wtmp), L.PreIncrement(p)]
+    code += [L.VariableDecl("int", p, 0), L.ForRange(i, 0, len(size_values), body=body)]
 
     return code
