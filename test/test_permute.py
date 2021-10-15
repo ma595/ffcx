@@ -7,6 +7,7 @@ from cffi import FFI
 import pytest
 import importlib
 
+
 @pytest.mark.parametrize("scalar_type, np_type",
                          [("double _Complex", "complex128"), ("double", "float64")])
 def test_permute(scalar_type, np_type):
