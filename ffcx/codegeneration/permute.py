@@ -7,7 +7,7 @@
 import numpy as np
 
 
-def permute_in_place(L, perm, A, direction):
+def permute_in_place(L, scalar_type, perm, A, direction):
     """Permute the flattened array A with the permutation given in perm."""
     # Marker for indices which still need adding to the list
     n = len(perm)
@@ -57,7 +57,7 @@ def permute_in_place(L, perm, A, direction):
     p = L.Symbol("p")
     wtmp = L.Symbol("wtmp")
 
-    body = [L.VariableDecl("const ufc_scalar_t", wtmp, w[c[p]]),
+    body = [L.VariableDecl(f"const {scalar_type}", wtmp, w[c[p]]),
             L.ForRange(j, 1, sizes[i],
                        body=[L.Assign(w[c[p]], w[c[p + 1]]), L.PreIncrement(p)]),
             L.Assign(w[c[p]], wtmp), L.PreIncrement(p)]
