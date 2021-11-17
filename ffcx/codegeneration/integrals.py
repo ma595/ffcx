@@ -625,7 +625,12 @@ class IntegralGenerator(object):
                     A_indices.append(index + offset)
                 else:
                     block_size = blockdata.ma_data[i].tabledata.block_size
-                    A_indices.append(block_size * index + offset)
+                    num_dofs = blockdata.ma_data[i].tabledata.values.shape[3]
+                    if i == block_rank - 1 and block_size != 1:
+                        A_indices.append(index + offset * num_dofs)
+                    else:
+                        A_indices.append(block_size * index + offset)
+
             rhs_expressions[tuple(A_indices)].append(B_rhs)
 
         # List of statements to keep in the inner loop
@@ -690,4 +695,8 @@ class IntegralGenerator(object):
 
         quadparts += [pre_loop, hoist, body]
 
+        # for part in quadparts:
+        #     print(part)
+
         return preparts, quadparts
+
