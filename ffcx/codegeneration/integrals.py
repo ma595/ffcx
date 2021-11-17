@@ -699,4 +699,3 @@ class IntegralGenerator(object):
         #     print(part)
 
         return preparts, quadparts
-
