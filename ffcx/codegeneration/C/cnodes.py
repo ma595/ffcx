@@ -1003,6 +1003,9 @@ class CStatement(CNode):
             raise
         return format_indented_lines(s)
 
+    def __hash__(self):
+        return hash(self.__str__())
+
 
 # Statements
 
@@ -1121,6 +1124,9 @@ class Comment(CStatement):
     def __eq__(self, other):
         return (isinstance(other, type(self)) and self.comment == other.comment)
 
+    def __hash__(self):
+        return hash(self.__str__())
+
 
 def NoOp():
     return Comment("Do nothing")
@@ -1188,6 +1194,9 @@ class VariableDecl(CStatement):
     def __eq__(self, other):
         return (isinstance(other, type(self)) and self.typename == other.typename
                 and self.symbol == other.symbol and self.value == other.value)
+
+    def __hash__(self):
+        return hash(self.__str__())
 
 
 def leftover(size, padlen):
@@ -1369,6 +1378,9 @@ class ArrayDecl(CStatement):
         attributes = ("typename", "symbol", "sizes", "padlen", "values")
         return (isinstance(other, type(self))
                 and all(getattr(self, name) == getattr(self, name) for name in attributes))
+
+    def __hash__(self):
+        return hash(self.__str__())
 
 
 # Scoped statements

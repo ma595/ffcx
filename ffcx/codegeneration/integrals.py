@@ -700,7 +700,7 @@ class IntegralGenerator(object):
         L = self.backend.language
 
         loops = collections.defaultdict(list)
-        pre_loop = {}
+        pre_loop = set()
         for access, definition in definitions.items():
             for d in definition:
                 if isinstance(d, L.ForRange):
