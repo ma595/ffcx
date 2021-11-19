@@ -700,13 +700,13 @@ class IntegralGenerator(object):
         L = self.backend.language
 
         loops = collections.defaultdict(list)
-        pre_loop = []
+        pre_loop = {}
         for access, definition in definitions.items():
             for d in definition:
                 if isinstance(d, L.ForRange):
                     loops[(d.index, d.begin, d.end)] += [d.body]
                 else:
-                    pre_loop += [d]
+                    pre_loop.add(d)
         fused = []
 
         for info, body in loops.items():
@@ -714,6 +714,6 @@ class IntegralGenerator(object):
             fused += [L.ForRange(index, begin, end, body)]
 
         code = []
-        code += pre_loop
+        code += list(pre_loop)
         code += fused
         return code
