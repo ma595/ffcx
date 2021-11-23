@@ -63,10 +63,11 @@ def permute_in_place(L, scalar_type, perm, A, direction):
     p = L.Symbol("p")
     wtmp = L.Symbol("wtmp")
 
-    body = [L.VariableDecl(f"const {scalar_type}", wtmp, w[k*ncols + c[p]]),
+    body = [L.VariableDecl(f"const {scalar_type}", wtmp, w[k * ncols + c[p]]),
             L.ForRange(j, 1, sizes[i],
-                       body=[L.Assign(w[k*ncols + c[p]], w[k*ncols + c[p + 1]]), L.PreIncrement(p)]),
-            L.Assign(w[k*ncols + c[p]], wtmp), L.PreIncrement(p)]
+                       body=[L.Assign(w[k * ncols + c[p]], w[k * ncols + c[p + 1]]),
+                             L.PreIncrement(p)]),
+            L.Assign(w[k * ncols + c[p]], wtmp), L.PreIncrement(p)]
     code += [L.ForRange(k, 0, nrows, body=[L.VariableDecl("int", p, 0), L.ForRange(i, 0, len(size_values), body=body)])]
 
     return code
