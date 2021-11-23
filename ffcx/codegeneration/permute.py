@@ -46,21 +46,27 @@ def permute_in_place(L, scalar_type, perm, A, direction):
 
     # Code generation
     w = A.array
-    len_A = np.product([v.value for v in A.dims])
-    assert len_A == n, f"Incorrect number of permutation values for array: {len_A}, {n}"
+    rank = len(A.dims)
+    ncols = A.dims[-1].value
+    nrows = 1
+    if rank == 2:
+        nrows = A.dims[0].value
+
+    assert ncols == n, f"Incorrect number of permutation values for array: {ncols}, {n}"
     sizes = L.Symbol("perm_sizes")
     c = L.Symbol("perm_values")
     code = [L.ArrayDecl("const int", sizes, len(size_values), values=size_values),
             L.ArrayDecl("const int", c, len(c_values), values=c_values)]
     i = L.Symbol("i")
     j = L.Symbol("j")
+    k = L.Symbol("k")
     p = L.Symbol("p")
     wtmp = L.Symbol("wtmp")
 
-    body = [L.VariableDecl(f"const {scalar_type}", wtmp, w[c[p]]),
+    body = [L.VariableDecl(f"const {scalar_type}", wtmp, w[k*ncols + c[p]]),
             L.ForRange(j, 1, sizes[i],
-                       body=[L.Assign(w[c[p]], w[c[p + 1]]), L.PreIncrement(p)]),
-            L.Assign(w[c[p]], wtmp), L.PreIncrement(p)]
-    code += [L.VariableDecl("int", p, 0), L.ForRange(i, 0, len(size_values), body=body)]
+                       body=[L.Assign(w[k*ncols + c[p]], w[k*ncols + c[p + 1]]), L.PreIncrement(p)]),
+            L.Assign(w[k*ncols + c[p]], wtmp), L.PreIncrement(p)]
+    code += [L.ForRange(k, 0, nrows, body=[L.VariableDecl("int", p, 0), L.ForRange(i, 0, len(size_values), body=body)])]
 
     return code
