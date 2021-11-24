@@ -7,6 +7,7 @@
 import collections
 import logging
 import itertools
+import numpy
 from typing import Tuple, List
 
 import ufl
@@ -731,6 +732,7 @@ class IntegralGenerator(object):
 
         L = self.backend.language
         scalar_type = self.backend.access.parameters["scalar_type"]
+        code = []
 
         # Generate permutation
         block_contributions = self.ir.integrand[quadrature_rule]["block_contributions"]
@@ -738,10 +740,10 @@ class IntegralGenerator(object):
         unique_dofmaps = [dofmap for dofmap in sorted(set(col_dofmaps))]
         perm = list(itertools.chain.from_iterable(unique_dofmaps))
 
-        shape = self.ir.tensor_shape
-        Asym = self.backend.symbols.element_tensor()
-        A = L.FlattenedArray(Asym, dims=shape)
-
-        code = permute_in_place(L, scalar_type, perm, A, "forward")
+        if numpy.any(numpy.diff(perm) != 1):
+            shape = self.ir.tensor_shape
+            Asym = self.backend.symbols.element_tensor()
+            A = L.FlattenedArray(Asym, dims=shape)
+            code += permute_in_place(L, scalar_type, perm, A, "forward")
 
         return code
