@@ -692,9 +692,6 @@ class IntegralGenerator(object):
 
         quadparts += [pre_loop, hoist, body]
 
-        # for part in quadparts:
-        #     print(part)
-
         return preparts, quadparts
 
     def fuse_loops(self, definitions):
