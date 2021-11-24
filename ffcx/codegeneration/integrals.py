@@ -738,18 +738,20 @@ class IntegralGenerator(object):
         shape = self.ir.tensor_shape
         if not shape:
             return []
+
         Asym = self.backend.symbols.element_tensor()
         A = L.FlattenedArray(Asym, dims=shape)
         perm = numpy.arange(shape[-1], dtype=int)
 
         # Compute column permutation
         for d, block in block_contributions.items():
-            bs = block[-1].ma_data[-1].tabledata.block_size
-            offset = block[-1].ma_data[-1].tabledata.offset
-            numdofs = block[-1].ma_data[-1].tabledata.values.shape[3]
+            dofmap = d[-1]
+            tabledata = block[-1].ma_data[-1].tabledata
+            bs = tabledata.block_size
+            offset = tabledata.tabledata.offset
+            numdofs = tabledata.tabledata.values.shape[3]
 
             if bs > 1:
-                dofmap = d[-1]
                 begin = dofmap[0] - offset
                 offset = begin + offset * numdofs
                 perm[offset:offset + numdofs] = dofmap
