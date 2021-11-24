@@ -731,17 +731,18 @@ class IntegralGenerator(object):
 
         L = self.backend.language
         block_contributions = self.ir.integrand[quadrature_rule]["block_contributions"]
+        scalar_type = self.backend.access.parameters["scalar_type"]
+
+        code = []
 
         shape = self.ir.tensor_shape
+        if not shape:
+            return []
         Asym = self.backend.symbols.element_tensor()
         A = L.FlattenedArray(Asym, dims=shape)
         perm = numpy.arange(shape[-1], dtype=int)
 
-        scalar_type = self.backend.access.parameters["scalar_type"]
-        code = []
-
         # Compute column permutation
-
         for d, block in block_contributions.items():
             bs = block[-1].ma_data[-1].tabledata.block_size
             offset = block[-1].ma_data[-1].tabledata.offset
