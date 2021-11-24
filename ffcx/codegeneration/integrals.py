@@ -6,6 +6,8 @@
 
 import collections
 import logging
+import itertools
+import numpy
 from typing import Tuple, List
 
 import ufl
@@ -17,6 +19,7 @@ from ffcx.ir.elementtables import piecewise_ttypes
 from ffcx.ir.representationutils import QuadratureRule
 from ffcx.ir.integral import block_data_t
 from ffcx.naming import cdtype_to_numpy
+from ffcx.codegeneration.permute import permute_in_place
 
 logger = logging.getLogger("ffcx")
 
@@ -205,8 +208,10 @@ class IntegralGenerator(object):
             # Generate code to integrate reusable blocks of final
             # element tensor
             preparts, quadparts = self.generate_quadrature_loop(rule)
+            permutations = self.generate_permutation(rule)
             all_preparts += preparts
             all_quadparts += quadparts
+            all_quadparts += permutations
 
         # Collect parts before, during, and after quadrature loops
         parts += all_preparts
@@ -509,8 +514,6 @@ class IntegralGenerator(object):
 
             # Add computations
             quadparts.extend(block_quadparts)
-        
-        self.generate_permutation(quadrature_rule)
 
         return preparts, quadparts
 
@@ -725,7 +728,21 @@ class IntegralGenerator(object):
         code += fused
         return code
 
-    def generate_permutation(self, quadrature_rule: QuadratureRule):
-        block_contributions = self.ir.integrand[quadrature_rule]["block_contributions"]
-        return None
+    def generate_permutation(self, quadrature_rule):
 
+        L = self.backend.language
+        scalar_type = self.backend.access.parameters["scalar_type"]
+
+        # Generate permutation
+        block_contributions = self.ir.integrand[quadrature_rule]["block_contributions"]
+        col_dofmaps = [d[-1] for d, _ in block_contributions.items()]
+        unique_dofmaps = [dofmap for dofmap in sorted(set(col_dofmaps))]
+        perm = list(itertools.chain.from_iterable(unique_dofmaps))
+
+        shape = self.ir.tensor_shape
+        Asym = self.backend.symbols.element_tensor()
+        A = L.FlattenedArray(Asym, dims=shape)
+
+        code = permute_in_place(L, scalar_type, perm, A, "forward")
+
+        return code
