@@ -6,7 +6,6 @@
 
 import collections
 import logging
-import itertools
 import numpy
 from typing import Tuple, List
 
@@ -731,19 +730,30 @@ class IntegralGenerator(object):
     def generate_permutation(self, quadrature_rule):
 
         L = self.backend.language
+        block_contributions = self.ir.integrand[quadrature_rule]["block_contributions"]
+
+        shape = self.ir.tensor_shape
+        Asym = self.backend.symbols.element_tensor()
+        A = L.FlattenedArray(Asym, dims=shape)
+        perm = numpy.arange(shape[-1], dtype=int)
+
         scalar_type = self.backend.access.parameters["scalar_type"]
         code = []
 
-        # Generate permutation
-        block_contributions = self.ir.integrand[quadrature_rule]["block_contributions"]
-        col_dofmaps = [d[-1] for d, _ in block_contributions.items()]
-        unique_dofmaps = [dofmap for dofmap in sorted(set(col_dofmaps))]
-        perm = list(itertools.chain.from_iterable(unique_dofmaps))
+        # Compute column permutation
+
+        for d, block in block_contributions.items():
+            bs = block[-1].ma_data[-1].tabledata.block_size
+            offset = block[-1].ma_data[-1].tabledata.offset
+            numdofs = block[-1].ma_data[-1].tabledata.values.shape[3]
+
+            if bs > 1:
+                dofmap = d[-1]
+                begin = dofmap[0] - offset
+                offset = begin + offset * numdofs
+                perm[offset:offset + numdofs] = dofmap
 
         if numpy.any(numpy.diff(perm) != 1):
-            shape = self.ir.tensor_shape
-            Asym = self.backend.symbols.element_tensor()
-            A = L.FlattenedArray(Asym, dims=shape)
             code += permute_in_place(L, scalar_type, perm, A, "forward")
 
         return code

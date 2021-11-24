@@ -64,7 +64,6 @@ def permute_in_place(L, scalar_type, perm, A, direction):
     wtmp = L.Symbol("w_tmp")
     wrow = L.Symbol("w_row")
 
-    print(dir(A))
     body = [L.VariableDecl(f"const {scalar_type}", wtmp, wrow[c[p]]),
             L.ForRange(j, 1, sizes[i],
                        body=[L.Assign(wrow[c[p]], wrow[c[p + 1]]),
