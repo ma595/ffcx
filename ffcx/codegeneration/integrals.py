@@ -7,7 +7,6 @@
 import collections
 import logging
 import itertools
-import numpy
 from typing import Tuple, List
 
 import ufl
