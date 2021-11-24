@@ -509,6 +509,8 @@ class IntegralGenerator(object):
 
             # Add computations
             quadparts.extend(block_quadparts)
+        
+        self.generate_permutation(quadrature_rule)
 
         return preparts, quadparts
 
@@ -722,3 +724,8 @@ class IntegralGenerator(object):
         code += pre_loop
         code += fused
         return code
+
+    def generate_permutation(self, quadrature_rule: QuadratureRule):
+        block_contributions = self.ir.integrand[quadrature_rule]["block_contributions"]
+        return None
+
