@@ -467,11 +467,8 @@ class IntegralGenerator(object):
         parts = []
         preparts = []
 
-        for vaccess, definition in pre_definitions.items():
-            preparts += definition
-
-        for vaccess, definition in definitions.items():
-            parts += definition
+        preparts += self.fuse_loops(pre_definitions)
+        parts += self.fuse_loops(definitions)
 
         if intermediates:
             if use_symbol_array:
@@ -699,3 +696,32 @@ class IntegralGenerator(object):
         #     print(part)
 
         return preparts, quadparts
+
+    def fuse_loops(self, definitions):
+        """
+        Merge a sequence of loops with the same iteration space into a single loop.
+
+        Loop fusion improves data locality, cache reuse and decreases the loop control overhead.
+        NOTE: Loop fusion might increase the pressure on register allocation.
+        Ideally, we should define a cost function to determine how many loops should fuse at a time.
+        """
+        L = self.backend.language
+
+        loops = collections.defaultdict(list)
+        pre_loop = []
+        for access, definition in definitions.items():
+            for d in definition:
+                if isinstance(d, L.ForRange):
+                    loops[(d.index, d.begin, d.end)] += [d.body]
+                else:
+                    pre_loop += [d]
+        fused = []
+
+        for info, body in loops.items():
+            index, begin, end = info
+            fused += [L.ForRange(index, begin, end, body)]
+
+        code = []
+        code += pre_loop
+        code += fused
+        return code
