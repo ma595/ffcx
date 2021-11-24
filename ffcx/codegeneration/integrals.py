@@ -748,8 +748,8 @@ class IntegralGenerator(object):
             dofmap = d[-1]
             tabledata = block[-1].ma_data[-1].tabledata
             bs = tabledata.block_size
-            offset = tabledata.tabledata.offset
-            numdofs = tabledata.tabledata.values.shape[3]
+            offset = tabledata.offset
+            numdofs = tabledata.values.shape[3]
 
             if bs > 1:
                 begin = dofmap[0] - offset
