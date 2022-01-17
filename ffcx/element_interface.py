@@ -8,16 +8,16 @@
 from __future__ import annotations
 
 import typing
-
-if typing.TYPE_CHECKING:
-    import ufl.finiteelement.FiniteElementBase
-
 import warnings
 from abc import ABC, abstractmethod
+from functools import cached_property
 
 import basix
 import numpy
 import ufl
+
+if typing.TYPE_CHECKING:
+    import ufl.finiteelement.FiniteElementBase
 
 
 def create_element(element: ufl.finiteelement.FiniteElementBase) -> BaseElement:
@@ -162,15 +162,14 @@ class BaseElement(ABC):
         """Number of DOFs the element has."""
         pass
 
-    @property
-    @abstractmethod
+    @cached_property
     def value_size(self) -> int:
         """Value size of the element.
 
         Equal to ``numpy.prod(value_shape)``.
 
         """
-        pass
+        return numpy.prod(self.value_shape)
 
     @property
     @abstractmethod
@@ -285,10 +284,6 @@ class BasixElement(BaseElement):
         return self.element.dim
 
     @property
-    def value_size(self):
-        return self.element.value_size
-
-    @property
     def value_shape(self):
         """Get the value shape of the element."""
         if len(self.element.value_shape) == 0:
@@ -377,10 +372,6 @@ class ComponentElement(BaseElement):
 
     @property
     def dim(self):
-        raise NotImplementedError
-
-    @property
-    def value_size(self):
         raise NotImplementedError
 
     @property
