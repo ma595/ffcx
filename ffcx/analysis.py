@@ -18,6 +18,9 @@ from collections import namedtuple
 import numpy
 import ufl
 
+from ffcx.element_interface import (BlockedElement, MixedElement,
+                                    QuadratureElement, create_element)
+
 logger = logging.getLogger("ffcx")
 
 
@@ -67,11 +70,23 @@ def analyze_ufl_objects(ufl_objects: typing.List,
             coordinate_elements += [ufl_object.ufl_coordinate_element()]
         elif isinstance(ufl_object[0], ufl.core.expr.Expr):
             original_expression = ufl_object[0]
+
+            # If the second element argument of the Expression tuple is defined as a finite element from ufl,
+            # get the corresponding interpolation points
+            # get the interpolation points
             if isinstance(ufl_object[1], ufl.FiniteElementBase):
-                points = ufl_object[1]
+                point_element = create_element(ufl_object[1])
+                if isinstance(point_element, BlockedElement):
+                    points = point_element.sub_element.element.points
+                elif isinstance(point_element, QuadratureElement):
+                    points = point_element._points
+                elif isinstance(point_element, MixedElement):
+                    raise ValueError("Evaluation of an expression with a mixed element is not allowed")
+                else:
+                    points = point_element.element.points
             else:
-                points = numpy.asarray(ufl_object[1])
-            expressions += [(original_expression, points)]
+                points = ufl_object[1]
+            expressions += [(original_expression, numpy.asarray(points))]
         else:
             raise TypeError("UFL objects not recognised.")
 
